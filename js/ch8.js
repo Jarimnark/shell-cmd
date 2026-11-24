@@ -85,7 +85,8 @@
     mount.appendChild(el('p', { class: 'small', text: 'Step through a normal update once. Then reset and interrupt it at different points to see what each broken state looks like.' }));
     mount.appendChild(el('div', {}, [atomicBox, el('label', { for: 'upd-atomic', text: ' Careful updater: swap the link with one atomic rename' })]));
     mount.appendChild(el('div', { class: 'btn-row' }, [nextBtn, killBtn, midBtn, againBtn, SH.btn('Reset', function () { k = 0; dead = false; draw(); })]));
-    mount.appendChild(el('div', { class: 'grid2' }, [el('div', {}, [list]), out]));
+    mount.appendChild(list);
+    mount.appendChild(out);
     mount.appendChild(verdict);
     draw();
   }

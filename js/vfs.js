@@ -96,7 +96,7 @@
       var size = nd.type === 'link' ? nd.target.length : nd.type === 'dir' ? 96 : nd.size;
       var owner = nd.owner || 'you';
       var s = VFS.modeStr(nd) + '  1 ' + (owner + '    ').slice(0, 4) + '  ' + (owner === 'root' ? 'wheel' : 'staff') +
-        '  ' + ('       ' + size).slice(-7) + ' Nov 24 10:02 ' + name;
+        '  ' + String(size).padStart(9) + ' Nov 24 10:02 ' + name;
       if (nd.type === 'link') s += ' -> ' + nd.target;
       return s;
     }

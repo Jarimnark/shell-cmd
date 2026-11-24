@@ -44,6 +44,7 @@
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; scroll-padding-top: calc(var(--topbar-h) + 12px); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
 body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.65 var(--sans); -webkit-text-size-adjust: 100%; }
@@ -226,3 +227,7 @@ dialog dd { margin: .1rem 0 0; color: var(--muted); font-size: .95rem; }
 .node.warnish { border-color: var(--warn); background: var(--warn-soft); }
 .diagram .arrow { font-size: 1.4rem; color: var(--muted); }
 .diagram .arrow.broken { color: var(--bad); }
+legend, .opt, .verdict, .why, .narration, li, td { overflow-wrap: anywhere; }
+legend { max-width: 100%; }
+pre.out { margin: .6rem 0; }
+#perm-octal { flex: 0 0 5rem; }

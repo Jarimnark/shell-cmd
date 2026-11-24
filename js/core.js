@@ -135,10 +135,10 @@
         }
         var fs = SH.el('fieldset', {}, [SH.el('legend', { text: (qi + 1) + '. ' + q.q })]);
         q.options.forEach(function (o, oi) {
-          var b = SH.el('button', { type: 'button', class: 'opt', text: o, onclick: function () { answer(oi, true); } });
-          buttons.push(b);
-          fs.appendChild(b);
+          buttons.push(SH.el('button', { type: 'button', class: 'opt', 'data-i': oi, text: o, onclick: function () { answer(oi, true); } }));
         });
+        /* Show the options in a random order so the right answer has no fixed position. */
+        buttons.slice().sort(function () { return Math.random() - 0.5; }).forEach(function (b) { fs.appendChild(b); });
         fs.appendChild(why);
         mount.appendChild(fs);
         if (saved[qi] != null) answer(saved[qi], false);
@@ -251,17 +251,18 @@
       setThemeLabel(themeBtn);
     });
 
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) {
-            Object.keys(links).forEach(function (k) { links[k].removeAttribute('aria-current'); });
-            if (links[en.target.id]) links[en.target.id].setAttribute('aria-current', 'true');
-          }
-        });
-      }, { rootMargin: '-20% 0px -70% 0px' });
-      document.querySelectorAll('section.chapter').forEach(function (s) { io.observe(s); });
+    /* Highlight the chapter you are reading in the sidebar. */
+    var sections = Array.prototype.slice.call(document.querySelectorAll('section.chapter')), ticking = false;
+    function spy() {
+      ticking = false;
+      var line = window.innerHeight * 0.3, cur = null;
+      sections.forEach(function (s) { if (s.getBoundingClientRect().top <= line) cur = s.id; });
+      Object.keys(links).forEach(function (k) {
+        if (k === cur) links[k].setAttribute('aria-current', 'true'); else links[k].removeAttribute('aria-current');
+      });
     }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; window.requestAnimationFrame(spy); } }, { passive: true });
+    spy();
     addCopyButtons();
     SH.updateProgress();
   };
