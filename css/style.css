@@ -212,3 +212,5 @@ dialog dd { margin: .1rem 0 0; color: var(--muted); font-size: .95rem; }
   pre.out { background: #fff; color: #000; border: 1px solid #999; }
   .chapter { border: 0; margin: 0; padding: 0; }
 }
+
+.edit-list li:not(.dirhead) > span:first-child { padding-left: .75rem; }

@@ -136,6 +136,77 @@ System        bin      etc    private  usr</pre>
   <div class="quiz" data-quiz="ch2"></div>
 </section>
 
+<section class="chapter" id="ch3" data-title="3. Environment variables and PATH">
+  <div class="kicker">Chapter 3</div>
+  <h2>Environment variables and PATH</h2>
+  <p>You typed <code>claude</code>, not <code>/Users/you/.local/bin/claude</code>. So how does zsh know which folder to look in? It reads a setting called PATH.</p>
+
+  <h3>Environment variables: named settings</h3>
+  <p>An <dfn>environment variable</dfn> is a named piece of text that a process carries around, like <code>HOME=/Users/you</code>. Every process has its own set. When a process starts another one, the new process gets a copy. That is how a setting made in your shell reaches the programs you launch from it.</p>
+  <p>To read one in the shell, put a dollar sign in front of the name. zsh replaces <code>$HOME</code> with the value before running the command, the same way it replaces <code>~</code>.</p>
+
+  <h3>PATH: the list of folders to search</h3>
+  <p><dfn>PATH</dfn> is an environment variable whose value is a list of directories, separated by colons:</p>
+  <pre class="out">/Users/you/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</pre>
+  <p>When the first word of your command is a plain name with no slash in it, zsh takes the folders in PATH <strong>from left to right</strong> and asks of each one: "is there a runnable file with this name in here?" The first yes wins. zsh stops and runs that file. Folders further right are never looked at.</p>
+  <div class="analogy">PATH is a list of drawers you always search in the same order when you need scissors. You take the first pair you find. If there is a better pair in drawer five, you will never know, because you stopped at drawer two.</div>
+  <p>Three things follow from this rule:</p>
+  <ul>
+    <li><strong>Order matters.</strong> If two folders both contain a <code>node</code>, the folder that comes first in PATH decides which one you get.</li>
+    <li><strong>"command not found" means the search came up empty.</strong> zsh looked in every PATH folder and none had a runnable file by that name. The program may still be on your disk, in a folder PATH does not list.</li>
+    <li><strong>The folder you are standing in is not searched.</strong> That is why you run a script in the current folder as <code>./build.sh</code>. The slash turns it into a path, and paths skip the search entirely.</li>
+  </ul>
+
+  <h3>Where PATH comes from</h3>
+  <p>macOS builds a starting PATH from the file <code>/etc/paths</code>. Then zsh reads your personal startup files, mainly <code>~/.zshrc</code>, each time a new shell starts. Installers add lines to those files, such as:</p>
+  <pre class="out">export PATH="$HOME/.local/bin:$PATH"</pre>
+  <p>Read it right to left: take the current PATH, put <code>~/.local/bin</code> in front of it, and store the result as the new PATH. <code>export</code> means "hand this variable down to programs I start". Because the new folder goes in front, it is searched first.</p>
+  <p>Editing <code>~/.zshrc</code> changes nothing in terminal windows that are already open. They read the file when they started. Open a new window, or run <code>source ~/.zshrc</code> to make the current shell read the file again.</p>
+
+  <div class="panel widget"><div class="widget-title">Interactive · fake terminal (PATH search)</div>
+    <p class="small">Type a program name. Watch zsh walk the PATH folders. Then change things and try again:</p>
+    <ol class="small">
+      <li>Run <code>claude</code>, then <code>git</code>, then <code>nope</code>.</li>
+      <li>In the filesystem box, add a program at <code>/usr/local/bin/claude</code>. Run <code>claude</code>. Which one runs? Now move <code>~/.local/bin</code> to the bottom of PATH and run it again.</li>
+      <li>Remove <code>/bin</code> from PATH and run <code>ls</code>. Even <code>ls</code> is only a file in a folder.</li>
+    </ol>
+    <div id="w-term3"></div>
+  </div>
+
+  <div class="note">zsh also offers the same list as an array called <code>path</code> (lower case). The two are tied together: change one and the other follows. <code>print -l $path</code> prints one folder per line, which is easier to read.</div>
+  <div class="note diff">PATH works the same way in bash and on Linux. Only the startup files differ (<code>~/.bashrc</code>, <code>~/.bash_profile</code>), and bash has no <code>path</code> array.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out" data-copy="echo $PATH">% echo $PATH
+/Users/you/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</pre>
+    <p class="small">Yours will be different and probably longer. Read it left to right: that is the search order.</p>
+    <pre class="out" data-copy="print -l $path">% print -l $path
+/Users/you/.local/bin
+/opt/homebrew/bin
+/usr/local/bin
+/usr/bin
+/bin
+/usr/sbin
+/sbin</pre>
+    <p class="small">Same list, one per line. Look for duplicates and for folders that no longer exist. Both are harmless but they are clues about old installs.</p>
+    <pre class="out" data-copy="cat /etc/paths">% cat /etc/paths
+/usr/local/bin
+/System/Cryptexes/App/usr/bin
+/usr/bin
+/bin
+/usr/sbin
+/sbin</pre>
+    <p class="small">The system-wide starting list. Everything else in your PATH was added by your startup files.</p>
+    <pre class="out" data-copy="grep -n PATH ~/.zshrc ~/.zprofile">% grep -n PATH ~/.zshrc ~/.zprofile
+/Users/you/.zshrc:3:export PATH="$HOME/.local/bin:$PATH"
+/Users/you/.zprofile:1:eval "$(/opt/homebrew/bin/brew shellenv)"</pre>
+    <p class="small">Shows the lines in your startup files that mention PATH. "No such file" for one of them is fine; not everyone has both.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch3"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -148,6 +219,7 @@ System        bin      etc    private  usr</pre>
 <script src="js/term.js"></script>
 <script src="js/ch1.js"></script>
 <script src="js/ch2.js"></script>
+<script src="js/ch3.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>

@@ -67,6 +67,8 @@
       for (var i = 0; i < steps.length; i++) {
         if (my !== runId) return;
         var s = steps[i];
+        /* Chapter 3 shows only the PATH part: skip the "no alias / no builtin" misses there. */
+        if (s.status === 'miss' && s.stage !== 'path' && s.stage !== 'end' && s.stage !== 'direct' && stages.indexOf(s.stage) === -1) continue;
         if (s.stage === 'again') renderLane();
         var node = nodeFor(s);
         if (node && on) { node.classList.add('s-checking'); if (node.scrollIntoView && s.stage === 'path') { /* keep lane static */ } }
@@ -135,7 +137,7 @@
       });
       return el('div', { class: 'panel' }, [
         el('h4', { text: 'PATH (edit me)' }), ul, f,
-        el('p', { class: 'small muted', text: 'Changing PATH also clears the hash cache, as real zsh does.' })
+        shell.useHash ? el('p', { class: 'small muted', text: 'Changing PATH also clears the hash cache, as real zsh does.' }) : null
       ]);
     }
 
@@ -187,7 +189,7 @@
         el('h4', { text: 'Fake filesystem (edit me)' }), ul,
         el('details', {}, [el('summary', { text: 'System folders (/bin, /usr/bin…)' }), sys]),
         f,
-        el('p', { class: 'small muted', text: 'Edits here do not tell the hash cache anything, just like on a real Mac.' })
+        shell.useHash ? el('p', { class: 'small muted', text: 'Edits here do not tell the hash cache anything, just like on a real Mac.' }) : null
       ]);
     }
 
