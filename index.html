@@ -436,6 +436,86 @@ lrwxr-xr-x  1 you  staff  45 Nov 24 10:02 claude -> /Users/you/.local/share/clau
   <div class="quiz" data-quiz="ch6"></div>
 </section>
 
+<section class="chapter" id="ch7" data-title="7. How programs get installed">
+  <div class="kicker">Chapter 7</div>
+  <h2>How programs get installed</h2>
+  <p>"Installing" a command-line tool sounds mysterious. With what you now know, it is two plain steps:</p>
+  <ol>
+    <li>Put the program's files somewhere on disk.</li>
+    <li>Make its name show up in a PATH folder. Usually that is a symlink in a folder already in PATH. Sometimes the installer adds a new folder to PATH in <code>~/.zshrc</code>.</li>
+  </ol>
+  <p>A <dfn>package manager</dfn> is a tool that does these steps for you, and also updates and removes software: Homebrew (<code>brew</code>) for general Mac software, <code>npm</code> for things written in JavaScript. Each one has its own favourite folders. Here are the four patterns you will meet, using <code>claude</code> as the example.</p>
+
+  <h3>1. A native installer</h3>
+  <p>You run an install script from the vendor's website. It downloads one self-contained binary.</p>
+  <pre class="out nowrap">~/.local/share/claude/versions/2.1.0     ← the real binary, one file per version
+~/.local/bin/claude  ->  ~/.local/share/claude/versions/2.1.0     ← the name in PATH</pre>
+  <p>Needs <code>~/.local/bin</code> in PATH. Everything is inside your home directory, so no admin password is involved. The tool updates itself.</p>
+
+  <h3>2. npm global install</h3>
+  <p><code>npm install -g SOMETHING</code> installs a JavaScript package "globally", meaning for your whole account and not for one project. npm has a setting called the <dfn>prefix</dfn>, a base folder. Packages go under <code>PREFIX/lib/node_modules</code> and their command names go in <code>PREFIX/bin</code>.</p>
+  <pre class="out nowrap">~/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js     ← the real script
+~/.npm-global/bin/claude  ->  ../lib/node_modules/@anthropic-ai/claude-code/cli.js</pre>
+  <p>Here the prefix is <code>~/.npm-global</code>, a common custom choice. <code>npm config get prefix</code> tells you yours. The program is a script that starts with <code>#!/usr/bin/env node</code>, so it also needs a working <code>node</code> in PATH.</p>
+
+  <h3>3. Homebrew</h3>
+  <p><code>brew install</code> keeps every package in its own versioned folder and links the commands into one shared <code>bin</code>.</p>
+  <pre class="out nowrap">/opt/homebrew/Caskroom/claude-code/2.0.9/claude     ← the real file
+/opt/homebrew/bin/claude  ->  ../Caskroom/claude-code/2.0.9/claude</pre>
+  <p>On Apple Silicon Macs the base is <code>/opt/homebrew</code>. On Intel Macs it is <code>/usr/local</code>. Homebrew's setup adds its <code>bin</code> to your PATH.</p>
+
+  <h3>4. nvm: a separate world per Node version</h3>
+  <p>nvm ("Node Version Manager") lets you keep several versions of Node side by side. Each version lives in its own folder with its own <code>bin</code> and its own global packages:</p>
+  <pre class="out nowrap">~/.nvm/versions/node/v22.11.0/bin/node
+~/.nvm/versions/node/v22.11.0/bin/claude  ->  ../lib/node_modules/@anthropic-ai/claude-code/cli.js
+~/.nvm/versions/node/v20.18.0/bin/node          ← no claude here</pre>
+  <p><code>nvm use 22</code> works by putting that version's <code>bin</code> folder at the front of PATH. So a tool you installed with <code>npm install -g</code> while on Node 22 is only reachable while Node 22 is active. Switch to Node 20 and the command seems to vanish. It was never installed for Node 20.</p>
+
+  <h3>Why two installs of the same tool fight</h3>
+  <p>Nothing stops you from installing the same tool in two of these ways. Then:</p>
+  <ul>
+    <li><strong>Only one runs.</strong> The one whose folder is earliest in PATH. The other sits on disk, shadowed.</li>
+    <li><strong>Each has its own updater.</strong> <code>npm update -g</code> updates npm's copy. The native tool's self-update updates the native copy. If you update the copy you are not running, the version you see does not change, which looks like "the update didn't work".</li>
+    <li><strong>Uninstalling one uncovers the other.</strong> Remove the winner and an old forgotten copy suddenly answers to the name.</li>
+    <li><strong>PATH order can differ between terminals.</strong> A VS Code terminal, a new tab, and a shell where you ran <code>nvm use</code> can each have a different order, so "it works in one window and not the other".</li>
+  </ul>
+  <p>The cure is always the same. Run <code>which -a NAME</code> to see every copy. Decide which one you want. Remove the others <em>with the tool that installed them</em> (<code>npm uninstall -g</code>, <code>brew uninstall</code>), then <code>rehash</code>.</p>
+
+  <div class="panel widget"><div class="widget-title">Interactive · which install wins?</div>
+    <div id="w-install"></div>
+  </div>
+
+  <div class="note diff">On Linux the patterns are the same with different folders: system packages land in <code>/usr/bin</code> (installed by <code>apt</code> or <code>dnf</code>), and Homebrew on Linux lives in <code>/home/linuxbrew/.linuxbrew</code>.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out" data-copy="which -a claude node npm">% which -a claude node npm
+/Users/you/.local/bin/claude
+/opt/homebrew/bin/node
+/opt/homebrew/bin/npm</pre>
+    <p class="small">One line per copy found. More than one line for the same name means duplicate installs. "not found" is fine if you don't have that tool.</p>
+    <pre class="out" data-copy="npm config get prefix">% npm config get prefix
+/Users/you/.npm-global</pre>
+    <p class="small">Where <code>npm install -g</code> puts things. With nvm active it will be a folder under <code>~/.nvm/versions/node/</code>.</p>
+    <pre class="out" data-copy="npm ls -g --depth=0">% npm ls -g --depth=0
+/Users/you/.npm-global/lib
+├── npm@10.9.0
+└── typescript@5.6.3</pre>
+    <p class="small">Every package installed globally under that prefix. Only lists; changes nothing.</p>
+    <pre class="out" data-copy="brew --prefix; brew list --versions | head -5">% brew --prefix; brew list --versions | head -5
+/opt/homebrew
+git 2.47.0
+go 1.23.2
+node 22.11.0</pre>
+    <p class="small">Homebrew's base folder and the first few things it installed. "command not found: brew" means you don't use Homebrew.</p>
+    <pre class="out" data-copy="ls ~/.nvm/versions/node">% ls ~/.nvm/versions/node
+v20.18.0  v22.11.0</pre>
+    <p class="small">One folder per Node version, each with its own globals. "No such file or directory" means you don't use nvm.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch7"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -452,6 +532,7 @@ lrwxr-xr-x  1 you  staff  45 Nov 24 10:02 claude -> /Users/you/.local/share/clau
 <script src="js/ch4.js"></script>
 <script src="js/ch5.js"></script>
 <script src="js/ch6.js"></script>
+<script src="js/ch7.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
