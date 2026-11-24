@@ -289,6 +289,86 @@ node=/opt/homebrew/bin/node</pre>
   <div class="quiz" data-quiz="ch4"></div>
 </section>
 
+<section class="chapter" id="ch5" data-title="5. Executables and permissions">
+  <div class="kicker">Chapter 5</div>
+  <h2>Executables and permissions</h2>
+  <p>zsh found a file with the right name. Finding it is not enough. The kernel will only start it if the file is marked as runnable for you.</p>
+
+  <h3>What counts as a program file</h3>
+  <p>There are two kinds of file you can run:</p>
+  <ul>
+    <li>A <dfn>binary</dfn>: machine code made by a compiler. <code>go build</code> produces one. Open it in an editor and you see garbage.</li>
+    <li>A <dfn>script</dfn>: a plain text file of commands. Its first line starts with <code>#!</code> (called the "shebang") and names the program that should read it, the <dfn>interpreter</dfn>: <code>#!/bin/sh</code>, <code>#!/usr/bin/env node</code>. When you run the script, the kernel really starts the interpreter and hands it the script.</li>
+  </ul>
+  <p>Either one is an <dfn>executable</dfn> only if its execute permission is switched on. The file name does not matter. <code>.sh</code> or <code>.exe</code> endings mean nothing here.</p>
+
+  <h3>Nine switches</h3>
+  <p>Every file has an owner (a user account, normally you) and a <dfn>group</dfn> (a named set of accounts; on a Mac your files usually belong to the group <code>staff</code>). The file then carries nine on/off switches called <dfn>permission bits</dfn>: three actions for each of three audiences.</p>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>r = read</th><th>w = write</th><th>x = execute</th></tr>
+    <tr><th>For a file</th><td>look at the contents</td><td>change the contents</td><td>run it as a program</td></tr>
+    <tr><th>For a directory</th><td>list the names inside</td><td>add, rename, delete things inside</td><td>pass through it to reach things inside</td></tr>
+  </table></div>
+  <p>The three audiences are the <strong>user</strong> who owns the file (u), the <strong>group</strong> (g), and all <strong>others</strong> (o). The system picks exactly one audience for you: if you are the owner, only the owner's three switches count.</p>
+
+  <h3>Reading <code>ls -l</code></h3>
+  <pre class="out nowrap">-rwxr-xr-x  1 you  staff  4096 Nov 24 10:02 deploy.sh
+│└┬┘└┬┘└┬┘  │  │    │      │        │         └ name
+│ │  │  │   │  │    │      │        └ last changed
+│ │  │  │   │  │    │      └ size in bytes
+│ │  │  │   │  │    └ group
+│ │  │  │   │  └ owner
+│ │  │  │   └ number of names this file has (ignore for now)
+│ │  │  └ others:  r-x  read, no write, execute
+│ │  └ group:      r-x  read, no write, execute
+│ └ owner:         rwx  read, write, execute
+└ kind:  - file   d directory   l symlink (chapter 6)</pre>
+  <p>A dash in a slot means that switch is off.</p>
+
+  <h3>Changing them: <code>chmod</code></h3>
+  <p><code>chmod</code> ("change mode") flips the switches. There are two ways to say what you want.</p>
+  <p><strong>Letters:</strong> <code>chmod +x deploy.sh</code> turns execute on for everyone. <code>chmod u+x</code> only for the owner. <code>chmod go-w</code> turns write off for group and others.</p>
+  <p><strong>Numbers</strong> (called <dfn>octal</dfn>): give each switch a value, <code>r=4</code>, <code>w=2</code>, <code>x=1</code>, and add them up per audience. <code>rwx</code> is 4+2+1 = 7. <code>r-x</code> is 4+1 = 5. <code>rw-</code> is 4+2 = 6. Three audiences give three digits: <code>chmod 755</code> means <code>rwxr-xr-x</code>, the usual setting for programs. <code>644</code> means <code>rw-r--r--</code>, the usual setting for ordinary files.</p>
+
+  <div class="panel widget"><div class="widget-title">Interactive · permission toggler</div>
+    <div id="w-perm"></div>
+  </div>
+
+  <h3>Why "permission denied" happens</h3>
+  <p>The shell asked the kernel to run a file and the kernel said no. The common causes:</p>
+  <ul>
+    <li><strong>The execute switch is off.</strong> New files you create in an editor start as <code>rw-r--r--</code> (644). So do many downloaded files. Fix: <code>chmod +x thefile</code>.</li>
+    <li><strong>It is a directory.</strong> You cannot run a folder.</li>
+    <li><strong>A folder on the way is closed to you.</strong> Without <code>x</code> on a directory you cannot reach anything inside it.</li>
+  </ul>
+  <p>One detail matters for chapter 9. When you type a bare name like <code>claude</code>, zsh tries every PATH folder. If nothing can be run, but along the way it met something by that name that exists and is not runnable, the error is <code>permission denied</code> and not <code>command not found</code>. At the same time <code>which -a claude</code> says <code>claude not found</code>, because <code>which</code> only lists files that <em>can</em> be run. The two messages together are a strong clue: something with that name is in PATH, and it is not executable.</p>
+  <div class="note">You can run a script without the execute switch by naming the interpreter yourself: <code>sh deploy.sh</code> or <code>node cli.js</code>. Then the program being started is <code>sh</code> or <code>node</code>, and the script only needs to be readable.</div>
+  <div class="note">macOS has a second, separate safety check called Gatekeeper for downloaded apps ("cannot be opened because the developer cannot be verified"). That is not a permission bit and is outside this guide.</div>
+  <div class="note diff">Permission bits and <code>chmod</code> work the same on Linux. The wording of errors differs a little: bash says <code>bash: ./deploy.sh: Permission denied</code>.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out nowrap" data-copy="ls -l /bin/ls ~/.zshrc">% ls -l /bin/ls ~/.zshrc
+-rwxr-xr-x  1 root  wheel  154624 Oct 12 09:30 /bin/ls
+-rw-r--r--  1 you   staff     212 Nov  3 18:41 /Users/you/.zshrc</pre>
+    <p class="small">A program (x on, owned by the system account <code>root</code>) next to a plain settings file (no x anywhere).</p>
+    <pre class="out nowrap" data-copy="stat -f '%Sp  %Lp  %N' /bin/ls ~/.zshrc">% stat -f '%Sp  %Lp  %N' /bin/ls ~/.zshrc
+-rwxr-xr-x  755  /bin/ls
+-rw-r--r--  644  /Users/you/.zshrc</pre>
+    <p class="small">The letters and the octal number side by side.</p>
+    <pre class="out" data-copy="id -un; id -gn">% id -un; id -gn
+you
+staff</pre>
+    <p class="small">Your user name and your main group. These decide which three switches apply to you.</p>
+    <pre class="out nowrap" data-copy="ls -ld ~ ~/.local/bin">% ls -ld ~ ~/.local/bin
+drwxr-x---+ 62 you  staff  1984 Nov 24 09:12 /Users/you
+drwxr-xr-x   3 you  staff    96 Nov 20 14:05 /Users/you/.local/bin</pre>
+    <p class="small"><code>-d</code> shows the directory itself and not its contents. Note the leading <code>d</code>. A trailing <code>+</code> or <code>@</code> means macOS keeps extra attributes on it; ignore those.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch5"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -303,6 +383,7 @@ node=/opt/homebrew/bin/node</pre>
 <script src="js/ch2.js"></script>
 <script src="js/ch3.js"></script>
 <script src="js/ch4.js"></script>
+<script src="js/ch5.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
