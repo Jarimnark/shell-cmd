@@ -214,3 +214,15 @@ dialog dd { margin: .1rem 0 0; color: var(--muted); font-size: .95rem; }
 }
 
 .edit-list li:not(.dirhead) > span:first-child { padding-left: .75rem; }
+
+/* Symlink / install diagrams */
+.diagram { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: .75rem 0; }
+.node { flex: 1 1 220px; border: 2px solid var(--border); border-radius: 10px; padding: .6rem .75rem; background: var(--surface); min-width: 0; }
+.node b { display: block; font-size: .8rem; color: var(--muted); }
+.node span { font: .82rem var(--mono); overflow-wrap: anywhere; }
+.node.good { border-color: var(--ok); background: var(--ok-soft); }
+.node.gone { border-style: dashed; border-color: var(--bad); background: var(--bad-soft); }
+.node.gone span { text-decoration: line-through; }
+.node.warnish { border-color: var(--warn); background: var(--warn-soft); }
+.diagram .arrow { font-size: 1.4rem; color: var(--muted); }
+.diagram .arrow.broken { color: var(--bad); }

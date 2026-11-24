@@ -369,6 +369,73 @@ drwxr-xr-x   3 you  staff    96 Nov 20 14:05 /Users/you/.local/bin</pre>
   <div class="quiz" data-quiz="ch5"></div>
 </section>
 
+<section class="chapter" id="ch6" data-title="6. Symlinks">
+  <div class="kicker">Chapter 6</div>
+  <h2>Symlinks</h2>
+  <p>Look inside a PATH folder and you will often find that the "programs" there are not the real files. They are pointers to files kept somewhere else. Those pointers are symlinks, and most install and update trouble involves one.</p>
+
+  <h3>First: a name is not the file</h3>
+  <p>On disk, each file is described by a record called an <dfn>inode</dfn>. The inode holds everything about the file except its name: where the data is, its size, its owner, its permission bits. A directory is a simple table that maps names to inodes. So a file name is a label stuck on an inode.</p>
+
+  <h3>What a symlink is</h3>
+  <p>A <dfn>symlink</dfn> (symbolic link) is a tiny special file whose whole content is a path to another file. That other file is the <dfn>target</dfn>. When any program opens or runs the link, the kernel reads the path inside and goes to the target without telling anyone.</p>
+  <div class="analogy">A symlink is a sticky note on a drawer that says "the scissors are in the garage, shelf 2". The note is not the scissors. Throw the note away and the scissors are still in the garage. Take the scissors out of the garage and the note is still there, and now it lies.</div>
+
+  <h3>Making one</h3>
+  <pre class="out">ln -s  /Users/you/.local/share/claude/versions/2.1.0  /Users/you/.local/bin/claude
+       └──────────── target: the real file ─────────┘  └──── link: the new name ────┘</pre>
+  <p>The order is "existing thing first, new name second", the same as <code>cp</code>. <code>-s</code> means symbolic. If something already exists at the link name, <code>ln -s</code> refuses with "File exists". Adding <code>-f</code> ("force") replaces it: <code>ln -sf</code>. That is how you repoint an existing link.</p>
+
+  <h3>Spotting one in <code>ls -la</code></h3>
+  <pre class="out nowrap">% ls -la ~/.local/bin
+lrwxr-xr-x  1 you  staff  45 Nov 24 10:02 claude -> /Users/you/.local/share/claude/versions/2.1.0</pre>
+  <p>Two signs: the first character is <code>l</code>, and there is an arrow after the name. The arrow shows the path written inside the link. The size (45) is the length of that path text. The permission letters on a symlink mean nothing; the target's permissions are what count.</p>
+
+  <h3>Why installers love them</h3>
+  <p>An installer can keep each version of a tool in its own place (<code>versions/2.1.0</code>, <code>versions/2.2.0</code>) and put a single short name in a PATH folder that points at the current one. Updating then means changing one pointer. Chapter 8 walks through that.</p>
+
+  <h3>Broken links</h3>
+  <p>If the target is deleted, moved or renamed, the link stays behind and points at nothing. This is a <dfn>dangling link</dfn> (or broken link). The confusing part:</p>
+  <ul>
+    <li><code>ls -la</code> still lists the link with its arrow and gives no warning. <code>ls</code> only reads the note; it does not check the garage.</li>
+    <li>Running it by name gives <code>zsh: command not found</code>. To zsh's PATH search, a link to nothing is the same as nothing.</li>
+    <li>Running it by full path gives <code>no such file or directory</code>, about a path you can plainly see in <code>ls</code>.</li>
+  </ul>
+  <p>So when a command vanishes, do two checks: <code>ls -la</code> on the link, then <code>ls -la</code> on whatever the arrow points to.</p>
+  <p>The reverse case is simpler. If the link is deleted and the target is fine, the program is still on disk and only its name in PATH is gone. Recreate the link with <code>ln -s</code> and it is back.</p>
+
+  <div class="panel widget"><div class="widget-title">Interactive · symlink playground</div>
+    <div id="w-sym"></div>
+  </div>
+
+  <div class="note">A target can be a relative path, like <code>node -> ../Cellar/node/22.11.0/bin/node</code>. It is read starting from the folder the link is in, not from where you are standing.</div>
+  <div class="note">There is an older kind of link, the <dfn>hard link</dfn>: a second name attached directly to the same inode. Neither name is "the original". The number after the permissions in <code>ls -l</code> counts those names. Installers rarely use them, so this guide stops here.</div>
+  <div class="note diff">Symlinks work the same on Linux. Linux shows a link's own permissions as <code>lrwxrwxrwx</code>, and <code>ls</code> there usually colours broken links red, which macOS does not do by default.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out nowrap" data-copy="ls -ld /etc /tmp /var">% ls -ld /etc /tmp /var
+lrwxr-xr-x@ 1 root  wheel  11 Oct 12 09:30 /etc -> private/etc
+lrwxr-xr-x@ 1 root  wheel  11 Oct 12 09:30 /tmp -> private/tmp
+lrwxr-xr-x@ 1 root  wheel  11 Oct 12 09:30 /var -> private/var</pre>
+    <p class="small">Three symlinks every Mac has. The targets are relative paths.</p>
+    <pre class="out nowrap" data-copy="ls -la ~/.local/bin">% ls -la ~/.local/bin
+total 0
+drwxr-xr-x  3 you  staff  96 Nov 20 14:05 .
+drwxr-xr-x  5 you  staff 160 Nov 20 14:05 ..
+lrwxr-xr-x  1 you  staff  45 Nov 24 10:02 claude -> /Users/you/.local/share/claude/versions/2.1.0</pre>
+    <p class="small">If you have tools installed here you will see their links. "No such file or directory" only means you have no such folder.</p>
+    <pre class="out" data-copy="readlink ~/.local/bin/claude">% readlink ~/.local/bin/claude
+/Users/you/.local/share/claude/versions/2.1.0</pre>
+    <p class="small"><code>readlink</code> prints only the path stored in the link.</p>
+    <pre class="out nowrap" data-copy="ls -laL ~/.local/bin/claude">% ls -laL ~/.local/bin/claude
+-rwxr-xr-x  1 you  staff  182000000 Nov 20 14:05 /Users/you/.local/bin/claude</pre>
+    <p class="small"><code>-L</code> tells <code>ls</code> to follow the link and describe the target. If the link is dangling, this is the form that fails with "No such file or directory", which makes it a quick health check.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch6"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -384,6 +451,7 @@ drwxr-xr-x   3 you  staff    96 Nov 20 14:05 /Users/you/.local/bin</pre>
 <script src="js/ch3.js"></script>
 <script src="js/ch4.js"></script>
 <script src="js/ch5.js"></script>
+<script src="js/ch6.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
