@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a shell finds and runs a program (macOS + zsh)</title>
+<meta name="description" content="An interactive, from-zero guide to what happens when you type a command in zsh on a Mac: PATH, lookup order, permissions, symlinks, installers and updaters.">
+<script>
+  /* Apply a saved theme before first paint. */
+  try { var t = JSON.parse(localStorage.getItem('shellcmd.theme')); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <button type="button" class="btn sm" id="menu-btn" aria-controls="sidebar" aria-expanded="false">☰ Chapters</button>
+  <span class="brand">How a shell finds and runs a program</span>
+  <button type="button" class="btn sm" id="glossary-btn">Glossary</button>
+  <button type="button" class="btn sm" id="theme-btn" aria-label="Switch colour theme">Theme</button>
+</header>
+<div class="layout">
+<nav id="sidebar" aria-label="Chapters"></nav>
+<main id="main">
+
+<section class="hero" id="top">
+  <h1>How a shell finds and runs a program</h1>
+  <p class="lead">You type <code>claude</code>, press Enter, and something runs. Or you get <code>command not found</code>. This guide explains every step in between, for macOS and zsh, starting from zero.</p>
+  <p>Each chapter has something to click or type, a short quiz, and a box of safe commands to try on your own Mac. Every technical word is explained the first time it shows up, and the <button type="button" class="btn sm" data-open-glossary>Glossary</button> button is always in the top bar.</p>
+  <p class="small muted">Everything here runs in your browser. The terminals on this page are simulations: nothing you type here touches your real computer.</p>
+</section>
+
+<!-- CHAPTERS-END -->
+
+<footer>
+  <p>Behaviour described here was checked against zsh 5.9, the version macOS ships. The terminals on this page are simplified simulations, built to teach the idea.</p>
+</footer>
+</main>
+</div>
+<script src="js/core.js"></script>
+<script src="js/vfs.js"></script>
+<script src="js/term.js"></script>
+<!-- SCRIPTS-END -->
+<script>SH.init();</script>
+</body>
+</html>
