@@ -77,6 +77,65 @@ ls: /nope: No such file or directory
   <div class="quiz" data-quiz="ch1"></div>
 </section>
 
+<section class="chapter" id="ch2" data-title="2. Files, folders, paths">
+  <div class="kicker">Chapter 2</div>
+  <h2>Files, folders, paths</h2>
+  <p>The shell finds programs by looking for files in folders. So first we need a clear picture of how files are arranged and how you point at one.</p>
+
+  <h3>One big tree</h3>
+  <p>A <dfn>directory</dfn> is a container that holds files and other directories. "Directory" and "folder" are the same thing; Finder says folder, the terminal world says directory.</p>
+  <p>Everything on your Mac lives in a single tree of directories. The top of the tree is called the <dfn>root</dfn> and is written as a lone slash: <code>/</code>. Every file is somewhere below it.</p>
+
+  <h3>A path is an address</h3>
+  <p>A <dfn>path</dfn> is the address of a file or directory. You write the folder names you walk through, separated by slashes. <code>/usr/bin/git</code> means: start at the root, go into <code>usr</code>, go into <code>bin</code>, and there is <code>git</code>.</p>
+
+  <h3>Absolute and relative</h3>
+  <p>An <dfn>absolute path</dfn> starts with <code>/</code>. It starts from the root, so it means the same place no matter what.</p>
+  <p>A <dfn>relative path</dfn> does not start with <code>/</code>. It starts from wherever your shell is "standing" right now. That spot is the <dfn>working directory</dfn>. <code>pwd</code> ("print working directory") shows it, and <code>cd</code> ("change directory") moves it.</p>
+  <div class="analogy">An absolute path is a full postal address. A relative path is "second door on the left": only useful if you know where the speaker is standing.</div>
+
+  <h3>Four shortcuts</h3>
+  <div class="table-wrap"><table>
+    <tr><th>You write</th><th>It means</th></tr>
+    <tr><td><code>/</code></td><td>The root, the top of the tree.</td></tr>
+    <tr><td><code>~</code></td><td>Your <dfn>home directory</dfn>, your personal folder. On a Mac that is <code>/Users/yourname</code>. The shell swaps <code>~</code> for the real path before doing anything else.</td></tr>
+    <tr><td><code>.</code></td><td>"Right here": the working directory. <code>./build.sh</code> means "the build.sh in this folder".</td></tr>
+    <tr><td><code>..</code></td><td>"One level up": the folder that contains this one.</td></tr>
+  </table></div>
+
+  <h3>Hidden files</h3>
+  <p>A name starting with a dot, like <code>.zshrc</code> or <code>.local</code>, is hidden: plain <code>ls</code> and Finder skip it. Nothing else is special about it. A lot of developer tooling lives in hidden folders in your home directory, which is why <code>ls -a</code> ("all") will matter later.</p>
+
+  <div class="panel widget"><div class="widget-title">Interactive · path resolver</div>
+    <p class="small">Pick where you are standing, type a path, and see where it lands.</p>
+    <div id="w-paths"></div>
+  </div>
+
+  <div class="note diff">On a Mac the default disk format ignores upper/lower case in names, so <code>README</code> and <code>readme</code> are the same file. On Linux they are two different files. Write names with the exact case anyway.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out" data-copy="pwd">% pwd
+/Users/you</pre>
+    <p class="small">A new terminal window starts in your home directory.</p>
+    <pre class="out" data-copy="echo ~">% echo ~
+/Users/you</pre>
+    <p class="small">Proof that <code>~</code> is the shell's shorthand. <code>echo</code> only prints what it is given, and by the time it got it, zsh had already swapped in the real path.</p>
+    <pre class="out" data-copy="ls /">% ls /
+Applications  Users    cores  home     sbin  var
+Library       Volumes  dev    opt      tmp
+System        bin      etc    private  usr</pre>
+    <p class="small">The top of the tree. <code>bin</code> and <code>usr</code> hold programs that come with macOS. <code>Users</code> holds the home directories.</p>
+    <pre class="out" data-copy="ls -a ~">% ls -a ~
+.            .zsh_history  Desktop    Library
+..           .zshrc        Documents  Movies
+.local       .npm          Downloads  Music</pre>
+    <p class="small">With <code>-a</code> the hidden dot-names appear, including <code>.</code> and <code>..</code> themselves. Your list will be longer.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch2"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -88,6 +147,7 @@ ls: /nope: No such file or directory
 <script src="js/vfs.js"></script>
 <script src="js/term.js"></script>
 <script src="js/ch1.js"></script>
+<script src="js/ch2.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
