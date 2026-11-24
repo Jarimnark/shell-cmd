@@ -628,6 +628,66 @@ claude=/Users/you/.local/bin/claude</pre>
   <div class="quiz" data-quiz="ch9"></div>
 </section>
 
+<section class="chapter" id="ch10" data-title="10. My debugging checklist">
+  <div class="kicker">Chapter 10</div>
+  <h2>My debugging checklist</h2>
+  <p class="intro10">When a command will not run, do the same six checks in the same order. Each one answers a single question and tells you which chapter the problem belongs to. Use the guided version, or print the page version and keep it near your desk.</p>
+
+  <div class="panel widget"><div class="widget-title">Interactive · guided checklist</div>
+    <div id="w-check"></div>
+  </div>
+
+  <div class="printable panel">
+    <h3>The checklist (replace NAME with the command)</h3>
+    <ol>
+      <li><strong>What does zsh see?</strong> &nbsp;<code>which -a NAME</code> &nbsp;and&nbsp; <code>type NAME</code>
+        <ul>
+          <li>An alias or function: that is what runs, not a file. Look in <code>~/.zshrc</code>.</li>
+          <li>Several paths: duplicate installs. The first line wins. Keep one, uninstall the rest with their own tool.</li>
+          <li>One path: go to step 2 with that path.</li>
+          <li>"not found": go to step 2 with the place it <em>should</em> be, e.g. <code>~/.local/bin/NAME</code>.</li>
+        </ul></li>
+      <li><strong>What is at that spot?</strong> &nbsp;<code>ls -la THE_PATH</code>
+        <ul>
+          <li>"No such file": the name is missing from the PATH folder. Is the real program still on disk? If yes, recreate the link (<code>ln -s</code>) or reinstall.</li>
+          <li>Starts with <code>-</code> and has no <code>x</code>: <code>chmod +x</code>.</li>
+          <li>Starts with <code>l</code> and shows <code>-></code>: a symlink. Go to step 3.</li>
+        </ul></li>
+      <li><strong>Is the target alive?</strong> &nbsp;<code>ls -laL THE_PATH</code>
+        <ul>
+          <li>"No such file": dangling link. Repoint it (<code>ln -sf REAL_FILE THE_PATH</code>) or reinstall.</li>
+          <li>No <code>x</code> on the target: half-finished install. <code>chmod +x</code> the target, or reinstall.</li>
+        </ul></li>
+      <li><strong>Is the folder in PATH, and is anything else in the way?</strong> &nbsp;<code>print -l $path</code>
+        <ul>
+          <li>Folder not listed: add <code>export PATH="FOLDER:$PATH"</code> to <code>~/.zshrc</code>, open a new terminal.</li>
+          <li>Error was "permission denied" but <code>which -a</code> says not found: something non-runnable has that name. Find it: <code>for d in $path; do ls -la $d/NAME; done 2>/dev/null</code></li>
+        </ul></li>
+      <li><strong>Is the shell's memory stale?</strong> &nbsp;<code>rehash</code>, then try again. Still odd? Open a new terminal window.</li>
+      <li><strong>Last resort: reinstall cleanly.</strong> Remove other copies first (step 1), run the official installer once, then <code>rehash</code> and repeat step 1 to confirm a single path.</li>
+    </ol>
+    <p class="small"><strong>Error decoder:</strong> "command not found" = nothing runnable by that name in PATH. "permission denied" = found something by that name, not allowed to run it. "no such file or directory: /a/path" = you gave a path, and nothing is there (or it is a dangling link).</p>
+  </div>
+  <div class="btn-row"><button type="button" class="btn" id="print-checklist">Print the checklist</button></div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <p>Rehearse steps 1 to 4 on a command that works, so the healthy output is familiar before something breaks.</p>
+    <pre class="out" data-copy="which -a git; type git">% which -a git; type git
+/usr/bin/git
+git is /usr/bin/git</pre>
+    <pre class="out nowrap" data-copy="ls -la /usr/bin/git; ls -laL /usr/bin/git">% ls -la /usr/bin/git; ls -laL /usr/bin/git
+-rwxr-xr-x  1 root  wheel  168432 Oct 12 09:30 /usr/bin/git
+-rwxr-xr-x  1 root  wheel  168432 Oct 12 09:30 /usr/bin/git</pre>
+    <p class="small">A plain executable file, so both lines are the same. For a symlink the first line would start with <code>l</code> and show an arrow.</p>
+    <pre class="out nowrap" data-copy="for d in $path; do ls -la $d/git; done 2>/dev/null">% for d in $path; do ls -la $d/git; done 2>/dev/null
+-rwxr-xr-x  1 root  wheel  168432 Oct 12 09:30 /usr/bin/git</pre>
+    <p class="small">Every PATH folder that has anything named git. One line: no duplicates and nothing in the way.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch10"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -647,6 +707,7 @@ claude=/Users/you/.local/bin/claude</pre>
 <script src="js/ch7.js"></script>
 <script src="js/ch8.js"></script>
 <script src="js/ch9.js"></script>
+<script src="js/ch10.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
