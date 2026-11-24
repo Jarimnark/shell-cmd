@@ -30,6 +30,53 @@
   <p class="small muted">Everything here runs in your browser. The terminals on this page are simulations: nothing you type here touches your real computer.</p>
 </section>
 
+<section class="chapter" id="ch1" data-title="1. Terminal, shell, program">
+  <div class="kicker">Chapter 1</div>
+  <h2>Terminal vs shell vs program</h2>
+  <p>Three different things are involved when you type a command. People mix the words up all the time, so let's separate them.</p>
+
+  <h3>The terminal: a window for text</h3>
+  <p>The <dfn>terminal</dfn> is the app with the window you type into: Terminal.app, iTerm2, or the panel at the bottom of VS Code. Its job is small. It sends your keystrokes to whatever is running inside it, and it draws the text that comes back. It does not know what <code>claude</code> or <code>git</code> means.</p>
+
+  <h3>The shell: the thing that reads your line</h3>
+  <p>The <dfn>shell</dfn> is a program that runs inside the terminal. It prints the prompt (the <code>%</code> at the start of the line), waits for you to type a line, works out what that line means, and gets it done. On a Mac the default shell is <dfn>zsh</dfn> (say "zee shell").</p>
+  <div class="analogy">The terminal is a phone. The shell is the receptionist on the other end. The phone only carries your voice. The receptionist is the one who understands "get me Claude" and knows which office to call.</div>
+
+  <h3>Programs and processes</h3>
+  <p>A <dfn>program</dfn> is a <dfn>file</dfn> (a named piece of data stored on disk) that contains instructions for the computer. While it sits on disk it does nothing. When the system starts carrying out those instructions, the running thing is called a <dfn>process</dfn>. A recipe in a book is a program. You cooking from it is a process. Two people can cook the same recipe at once: one program, two processes.</p>
+  <p>zsh is itself a program, and the zsh in your terminal window is a process. So is the terminal app.</p>
+
+  <h3>A command is a line of words</h3>
+  <p>What you type is a <dfn>command</dfn>. The shell cuts it into words at the spaces. The first word names what to run. The other words are <dfn>arguments</dfn>: extra information handed to it. In <code>git commit -m "fix"</code>, the thing to run is <code>git</code> and the arguments are <code>commit</code>, <code>-m</code> and <code>fix</code>.</p>
+
+  <h3>What happens when you press Enter</h3>
+  <p>Step through it. The rest of this site is mostly about step 3.</p>
+  <div class="panel widget"><div class="widget-title">Interactive · life of a command</div><div id="w-life"></div></div>
+
+  <div class="note">Starting a program is done by the <dfn>kernel</dfn>, the core of macOS that controls the hardware and decides which process runs when. The shell can only ask. The shell first makes a copy of itself ("fork"), and the copy asks the kernel to replace it with the new program ("exec"). You don't need the details. Remember that the shell finds the file, and the kernel runs it.</div>
+  <div class="note diff">Before macOS Catalina (2019) the default Mac shell was bash, and most Linux systems still default to bash. The ideas on this site are the same there. Where a detail differs, a note like this one says so.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <p>All of these only read information.</p>
+    <pre class="out" data-copy="echo $SHELL">% echo $SHELL
+/bin/zsh</pre>
+    <p class="small">Your login shell: the shell macOS starts for you in a new terminal window. The answer is a file. zsh is a program on disk like any other.</p>
+    <pre class="out" data-copy="ps -p $$">% ps -p $$
+  PID TTY           TIME CMD
+ 4821 ttys003    0:00.21 -zsh</pre>
+    <p class="small"><code>$$</code> is the shell's own process number, so this lists the shell process you are typing into. Your numbers will differ. <code>CMD</code> should say zsh.</p>
+    <pre class="out" data-copy="zsh --version">% zsh --version
+zsh 5.9 (arm64-apple-darwin24.0)</pre>
+    <pre class="out" data-copy="ls /nope; echo $?">% ls /nope; echo $?
+ls: /nope: No such file or directory
+1</pre>
+    <p class="small"><code>$?</code> is the <dfn>exit code</dfn> of the last command: the number a program hands back when it ends. 0 means it worked. Anything else means some kind of failure.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch1"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -40,6 +87,7 @@
 <script src="js/core.js"></script>
 <script src="js/vfs.js"></script>
 <script src="js/term.js"></script>
+<script src="js/ch1.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
