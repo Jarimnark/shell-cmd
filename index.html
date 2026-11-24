@@ -207,6 +207,88 @@ System        bin      etc    private  usr</pre>
   <div class="quiz" data-quiz="ch3"></div>
 </section>
 
+<section class="chapter" id="ch4" data-title="4. Command lookup order in zsh">
+  <div class="kicker">Chapter 4</div>
+  <h2>Command lookup order in zsh</h2>
+  <p>Chapter 3 left something out. Before zsh searches PATH, it checks four other places. A name can be caught at any of them, and then PATH is never consulted.</p>
+
+  <h3>The order</h3>
+  <div class="table-wrap"><table>
+    <tr><th>#</th><th>zsh asks</th><th>What that is</th></tr>
+    <tr><td>1</td><td>Is it an <dfn>alias</dfn>?</td><td>A nickname you (or a tool) defined, usually in <code>~/.zshrc</code>: <code>alias ll='ls -l'</code>. zsh swaps the nickname for the longer text, then starts the lookup again with the new first word.</td></tr>
+    <tr><td>2</td><td>Is it a <dfn>shell function</dfn>?</td><td>A small named block of shell commands that lives in zsh's memory. Tools like nvm are shell functions, which is why <code>which nvm</code> prints code and not a file path.</td></tr>
+    <tr><td>3</td><td>Is it a <dfn>builtin</dfn>?</td><td>A command that is part of the zsh program itself: <code>cd</code>, <code>echo</code>, <code>type</code>, <code>which</code>, <code>hash</code>. No file on disk is involved. <code>cd</code> has to be a builtin: it changes the shell's own working directory, which no outside program could do.</td></tr>
+    <tr><td>4</td><td>Is it in the <dfn>hash table</dfn>?</td><td>zsh's memory of where it found programs before. More on this below.</td></tr>
+    <tr><td>5</td><td>Is it in a PATH folder?</td><td>The left-to-right search from chapter 3.</td></tr>
+  </table></div>
+  <p class="small muted">Words that are part of the shell language itself, like <code>if</code> and <code>for</code>, are recognised between steps 1 and 2. You will not meet them as a problem.</p>
+  <p>The practical point: if a command does something you don't expect, <strong>it may not be the program you think it is</strong>. An alias or function with the same name wins over any file.</p>
+
+  <h3>Asking zsh what a name means</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Command</th><th>What it tells you</th></tr>
+    <tr><td><code>type NAME</code></td><td>What zsh would run: "is an alias for…", "is a shell function", "is a shell builtin", or a file path.</td></tr>
+    <tr><td><code>which NAME</code></td><td>Much the same, shorter wording. For a program it prints the path. It trusts the hash table if the remembered file is still runnable.</td></tr>
+    <tr><td><code>which -a NAME</code></td><td><strong>All</strong> matches in lookup order, with a fresh search of every PATH folder. Use this one when debugging. It shows duplicates, and it ignores the hash table.</td></tr>
+    <tr><td><code>hash</code></td><td>Prints the hash table: every remembered <code>name=path</code> pair.</td></tr>
+    <tr><td><code>rehash</code></td><td>Empties the hash table. The next use of each command does a fresh PATH search.</td></tr>
+  </table></div>
+
+  <div class="panel widget"><div class="widget-title">Interactive · fake terminal (full lookup)</div>
+    <p class="small">Same pretend Mac, now with all five checks. Try these in order:</p>
+    <ol class="small">
+      <li><code>type ll</code> then <code>ll</code>: an alias is swapped, then <code>ls</code> is looked up.</li>
+      <li><code>greet</code> and <code>cd /</code>: caught at function and builtin. PATH is never searched.</li>
+      <li><code>claude</code> twice. The second time it is found in the hash cache.</li>
+      <li><code>alias claude='echo not the real claude'</code> then <code>claude</code>, then <code>which -a claude</code>.</li>
+    </ol>
+    <div id="w-term4"></div>
+  </div>
+
+  <h3>The hash table: remembering where the keys were</h3>
+  <p>Searching every PATH folder on every command is wasted work, so the first time zsh finds a program it writes down the full path. Next time it goes straight there.</p>
+  <div class="analogy">You found your keys in the kitchen drawer yesterday. Today you go straight to that drawer and skip the other rooms. Usually that is right. If someone moved the keys, your memory is now wrong, and that is called a <dfn>stale</dfn> cache.</div>
+  <p>The memory belongs to one shell process. Each terminal window has its own, and a new window starts empty. The memory goes stale when files change behind the shell's back. In zsh this shows up in two ways:</p>
+  <ul>
+    <li><strong>You keep getting the old one.</strong> You install a newer copy in a folder that is earlier in PATH. zsh still remembers the old spot, finds a working file there, and runs it. <code>which -a</code> lists the new one first, yet the old one runs. <code>rehash</code> fixes it.</li>
+    <li><strong>The remembered spot is empty.</strong> zsh notices the remembered file cannot be run and quietly falls back to a full PATH search. If the program is anywhere in PATH, it still runs. If not, you get the ordinary <code>command not found</code>.</li>
+  </ul>
+  <div class="note diff">bash is less forgiving in the second case. It trusts its memory and stops: <code>bash: /old/path/tool: No such file or directory</code>, even when the tool sits elsewhere in PATH. The bash command to forget is <code>hash -r</code> (zsh accepts that too). The demo below lets you switch shells to see the difference.</div>
+
+  <div class="panel widget"><div class="widget-title">Interactive · hash cache demo</div>
+    <div id="w-hash"></div>
+  </div>
+
+  <div class="note">When in doubt, run <code>rehash</code> or open a new terminal window. Both are harmless. Installers often tell you to "restart your terminal" for this reason, and for the PATH reason in chapter 3.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out" data-copy="type cd ls git">% type cd ls git
+cd is a shell builtin
+ls is /bin/ls
+git is /usr/bin/git</pre>
+    <p class="small">If <code>ls</code> says "is an alias for ls -G" or similar, something in your startup files defined that alias. That is normal.</p>
+    <pre class="out" data-copy="which -a python3">% which -a python3
+/opt/homebrew/bin/python3
+/usr/bin/python3</pre>
+    <p class="small">Two or more lines means there are several copies in PATH. The top line is the one that runs.</p>
+    <pre class="out" data-copy="alias">% alias
+ll='ls -l'
+run-help=man
+which-command=whence</pre>
+    <p class="small">Every alias in this shell. Scan it for names that match real programs.</p>
+    <pre class="out" data-copy="hash | head -5">% hash | head -5
+git=/usr/bin/git
+ls=/bin/ls
+node=/opt/homebrew/bin/node</pre>
+    <p class="small">The first few remembered locations. The order and the list will differ. An empty result means this shell has not remembered anything yet.</p>
+    <pre class="out" data-copy="rehash">% rehash</pre>
+    <p class="small">Prints nothing. It only empties the cache. It changes no files, so it is always safe.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch4"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -220,6 +302,7 @@ System        bin      etc    private  usr</pre>
 <script src="js/ch1.js"></script>
 <script src="js/ch2.js"></script>
 <script src="js/ch3.js"></script>
+<script src="js/ch4.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
