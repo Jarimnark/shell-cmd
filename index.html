@@ -516,6 +516,75 @@ v20.18.0  v22.11.0</pre>
   <div class="quiz" data-quiz="ch7"></div>
 </section>
 
+<section class="chapter" id="ch8" data-title="8. How auto-updaters work">
+  <div class="kicker">Chapter 8</div>
+  <h2>How auto-updaters work</h2>
+  <p>Many tools update themselves in the background. An updater has a tricky job: replace a program that may be running right now, without ever leaving you with half a program. The standard trick is built from things you already know: versioned files and a symlink.</p>
+
+  <h3>The usual recipe</h3>
+  <ol>
+    <li><strong>Download to a temporary name.</strong> The new version is saved under a throwaway name such as <code>.2.2.0.tmp</code>. A half-downloaded file can then never be mistaken for a real version.</li>
+    <li><strong>Finalise.</strong> When the download is complete, the updater checks it (often with a <dfn>checksum</dfn>: a fingerprint computed from the file's contents and compared with the expected one), renames it to its real name, and turns on the execute permission.</li>
+    <li><strong>Swap the pointer.</strong> The symlink in the PATH folder is changed to point at the new version. This is the moment the update "happens". Up to here, the old version kept working.</li>
+    <li><strong>Clean up.</strong> Old versions and temporary files are deleted.</li>
+  </ol>
+  <div class="analogy">Replacing the sign on a shop. You paint the new sign in the workshop (download), check the spelling (verify), and only then go outside and swap it (the pointer). If you get interrupted in the workshop, customers never notice. If you get interrupted on the ladder after taking the old sign down, the shop has no sign.</div>
+
+  <h3>The dangerous moment</h3>
+  <p>Changing a symlink can be done in two ways. The careful way creates the new link under a temporary name and then renames it on top of the old one. A rename is <dfn>atomic</dfn>: it either happens completely or not at all, so there is never a moment with no link. The sloppy way deletes the old link and then creates the new one. Between those two actions, the command does not exist.</p>
+
+  <h3>What "interrupted" means</h3>
+  <p>The updater is a process like any other. It stops dead if you close the terminal or the laptop lid at the wrong moment, press Ctrl-C, lose the network, run out of disk space, or if two copies of the updater run at once and trip over each other. Whatever it had finished stays on disk. Whatever it had not started never happens. That leaves a half-way state, and each half-way state has a recognisable look:</p>
+  <ul>
+    <li>A leftover temp file or folder with an odd name (starts with a dot, ends in <code>.tmp</code> or random letters).</li>
+    <li>A new version on disk that nothing points to, while the old one still runs. It looks as if the update never happened.</li>
+    <li>A missing link: <code>command not found</code>, though the real binary is sitting in <code>versions/</code>.</li>
+    <li>A link that points to a file that is gone, or that is not executable yet.</li>
+  </ul>
+
+  <div class="panel widget"><div class="widget-title">Interactive · updater simulator</div>
+    <div id="w-upd"></div>
+  </div>
+
+  <h3>npm does the same thing with folders</h3>
+  <p>When npm replaces or removes a global package, it does not delete the folder in place. It first renames the old package folder to a temporary name next to it, a dot plus the name plus random letters:</p>
+  <pre class="out nowrap">~/.npm-global/lib/node_modules/@anthropic-ai/claude-code
+        is renamed to
+~/.npm-global/lib/node_modules/@anthropic-ai/.claude-code-2DTsDk1V</pre>
+  <p>Then it does its work and deletes the temporary folder at the end. If npm is interrupted, that dot-folder stays. It is hidden from plain <code>ls</code>, and it can make the next npm command fail. That is case study B in the next chapter.</p>
+
+  <div class="note">The simulator shows the general technique. Real updaters differ in file names and in how careful they are. The shapes of the broken states are the same.</div>
+  <div class="note diff">Nothing here is Mac-specific. Linux tools update the same way.</div>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <pre class="out nowrap" data-copy="ls -la ~/.local/share/claude/versions">% ls -la ~/.local/share/claude/versions
+total 355472
+drwxr-xr-x  4 you  staff        128 Nov 24 10:02 .
+drwxr-xr-x  3 you  staff         96 Nov 20 14:05 ..
+-rwxr-xr-x  1 you  staff  182000000 Nov 20 14:05 2.1.0
+-rwxr-xr-x  1 you  staff  183500000 Nov 24 10:02 2.2.0</pre>
+    <p class="small">Each version is one big executable file. Things to notice: more than one version (an old one not yet cleaned up), odd temporary names, or a file without <code>x</code>. Use the folder of any self-updating tool you have.</p>
+    <pre class="out" data-copy="readlink ~/.local/bin/claude">% readlink ~/.local/bin/claude
+/Users/you/.local/share/claude/versions/2.2.0</pre>
+    <p class="small">Which version the pointer currently selects. Compare with the list above.</p>
+    <pre class="out nowrap" data-copy='ls -la "$(npm config get prefix)/lib/node_modules"'>% ls -la "$(npm config get prefix)/lib/node_modules"
+total 0
+drwxr-xr-x  5 you  staff  160 Nov 12 08:15 .
+drwxr-xr-x  3 you  staff   96 Sep  2 11:40 ..
+drwxr-xr-x  3 you  staff   96 Nov 12 08:15 @anthropic-ai
+drwxr-xr-x  9 you  staff  288 Sep  2 11:40 npm
+drwxr-xr-x  8 you  staff  256 Oct 30 16:22 typescript</pre>
+    <p class="small">npm's global packages. A name that starts with a dot and ends in random letters, here or one level down inside an <code>@scope</code> folder, is a leftover from an interrupted npm run.</p>
+    <pre class="out" data-copy="df -h ~">% df -h ~
+Filesystem      Size    Used   Avail Capacity  Mounted on
+/dev/disk3s5   460Gi   310Gi   142Gi    69%    /System/Volumes/Data</pre>
+    <p class="small">Free disk space. A full disk is a classic cause of half-finished updates.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch8"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -533,6 +602,7 @@ v20.18.0  v22.11.0</pre>
 <script src="js/ch5.js"></script>
 <script src="js/ch6.js"></script>
 <script src="js/ch7.js"></script>
+<script src="js/ch8.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
