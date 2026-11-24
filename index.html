@@ -585,6 +585,49 @@ Filesystem      Size    Used   Avail Capacity  Mounted on
   <div class="quiz" data-quiz="ch8"></div>
 </section>
 
+<section class="chapter" id="ch9" data-title="9. Case studies">
+  <div class="kicker">Chapter 9</div>
+  <h2>Case studies</h2>
+  <p>Three real incidents, replayed one command at a time. At each stop you are asked what you would check next. Pick an answer before reading on. A wrong pick costs nothing, and the explanation for it is often the most useful part.</p>
+  <p class="small muted">The output is what a Mac with zsh 5.9 prints, with the user name changed to <code>you</code>.</p>
+
+  <h3>A. <code>zsh: command not found: claude</code></h3>
+  <div class="panel widget"><div class="widget-title">Replay · the missing link</div><div id="w-case-a"></div></div>
+
+  <h3>B. <code>npm uninstall -g</code> fails with ENOTEMPTY</h3>
+  <div class="panel widget"><div class="widget-title">Replay · the leftover temp folder</div><div id="w-case-b"></div></div>
+
+  <h3>C. <code>zsh: permission denied: claude</code>, while <code>which -a</code> says "not found"</h3>
+  <div class="panel widget"><div class="widget-title">Replay · two messages that seem to disagree</div><div id="w-case-c"></div></div>
+  <div class="note"><strong>What was tested for case C.</strong> This incident was first written down as "stale zsh hash plus a missing symlink". On real zsh 5.9, those two alone print <code>command not found</code>, because zsh searches PATH again when its remembered location fails (chapter 4). To get <code>permission denied</code>, zsh must also meet something named <code>claude</code> in a PATH folder that exists and cannot be run. The replay uses a half-installed npm copy as that something. On the real machine it may have been a different leftover. The checks and the fix are the same either way.</div>
+
+  <h3>The three side by side</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Symptom</th><th>Real cause</th><th>Fix</th></tr>
+    <tr><td><code>command not found: claude</code></td><td>The link <code>~/.local/bin/claude</code> was missing. The binary and PATH were fine.</td><td>Reinstall (or <code>ln -s</code>), then <code>rehash</code>.</td></tr>
+    <tr><td>npm <code>ENOTEMPTY</code> on rename to <code>.claude-code-xxxx</code></td><td>A temp folder left by an interrupted npm run was blocking the rename.</td><td>Look with <code>ls -la</code>, remove the leftover folders by hand, run npm again.</td></tr>
+    <tr><td><code>permission denied: claude</code> and <code>which -a</code>: not found</td><td>Link missing, a stale hash entry, and a non-runnable <code>claude</code> elsewhere in PATH.</td><td><code>ln -sf</code> to the real binary, then <code>rehash</code>. Clean up the leftover.</td></tr>
+  </table></div>
+  <p>The same few commands solved all three: <code>which -a</code>, <code>ls -la</code>, a look at the target, a look at PATH. Chapter 10 turns that into a checklist.</p>
+
+  <aside class="tryit">
+    <h3>Try it on your Mac</h3>
+    <p>The read-only checks from the replays, safe to run any time.</p>
+    <pre class="out" data-copy="which -a claude; type claude">% which -a claude; type claude
+/Users/you/.local/bin/claude
+claude is /Users/you/.local/bin/claude</pre>
+    <p class="small">One path, and both commands agree: healthy.</p>
+    <pre class="out nowrap" data-copy="for d in $path; do ls -la $d/claude; done 2>/dev/null">% for d in $path; do ls -la $d/claude; done 2>/dev/null
+lrwxr-xr-x  1 you  staff  45 Nov 24 10:02 /Users/you/.local/bin/claude -> /Users/you/.local/share/claude/versions/2.1.0</pre>
+    <p class="small">Looks in every PATH folder for anything named <code>claude</code>, runnable or not. Unlike <code>which -a</code>, this also shows files without <code>x</code>, folders, and broken links. No output means no PATH folder has that name.</p>
+    <pre class="out" data-copy="hash | grep claude">% hash | grep claude
+claude=/Users/you/.local/bin/claude</pre>
+    <p class="small">What this shell remembers. No output is normal if you have not run <code>claude</code> in this window.</p>
+  </aside>
+
+  <div class="quiz" data-quiz="ch9"></div>
+</section>
+
 <!-- CHAPTERS-END -->
 
 <footer>
@@ -603,6 +646,7 @@ Filesystem      Size    Used   Avail Capacity  Mounted on
 <script src="js/ch6.js"></script>
 <script src="js/ch7.js"></script>
 <script src="js/ch8.js"></script>
+<script src="js/ch9.js"></script>
 <!-- SCRIPTS-END -->
 <script>SH.init();</script>
 </body>
